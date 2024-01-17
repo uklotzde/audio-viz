@@ -216,6 +216,21 @@ impl FilteredWaveformBinAccumulator {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WaveformFilterConfig {
+    sample_rate_hz: f32,
+    samples_per_bin: u32,
+}
+
+impl Default for WaveformFilterConfig {
+    fn default() -> Self {
+        Self {
+            sample_rate_hz: DEFAULT_SAMPLE_RATE_HZ,
+            samples_per_bin: 0,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct WaveformFilter {
     samples_per_bin: u32,
@@ -225,16 +240,19 @@ pub struct WaveformFilter {
 
 impl Default for WaveformFilter {
     fn default() -> Self {
-        Self::new(
-            Hertz::<f32>::from_hz(DEFAULT_SAMPLE_RATE_HZ).expect("valid default sample rate"),
-            0,
-        )
+        Self::new(Default::default())
     }
 }
 
 impl WaveformFilter {
     #[must_use]
-    pub fn new(sample_rate: Hertz<f32>, samples_per_bin: u32) -> Self {
+    #[allow(clippy::missing_panics_doc)]
+    pub fn new(config: WaveformFilterConfig) -> Self {
+        let WaveformFilterConfig {
+            sample_rate_hz,
+            samples_per_bin,
+        } = config;
+        let sample_rate = Hertz::<f32>::from_hz(sample_rate_hz).expect("valid sample rate");
         Self {
             samples_per_bin,
             filter_bank: FilterBank::new(sample_rate),
