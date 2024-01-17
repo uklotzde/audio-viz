@@ -45,3 +45,6 @@ default_trait_access = "allow"
 
 # The error types returned should be self-explanatory.
 missing_errors_doc = "allow"
+
+# Inevitable for short names.
+similar_names = "allow"

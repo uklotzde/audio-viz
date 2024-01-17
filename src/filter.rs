@@ -32,9 +32,9 @@ const HIGH_LP_FILTER_HZ: f32 = 1600.0;
 /// Overlapping highs with mids.
 const HIGH_HP_FILTER_HZ: f32 = HIGH_LP_FILTER_HZ / 2.0; // Overlap with mid
 
-const MIN_SAMPLES_PER_BIN: u32 = 64;
-
 // 3-band crossover using 4th-order Linkwitz-Riley (LR4) filters (2 cascaded 2nd-order Butterworth)
+#[derive(Debug)]
+#[allow(clippy::struct_field_names)]
 struct FilterBank {
     low_lp_lr4: [DirectForm2Transposed<f32>; 2],
     low_hp_lr4: [DirectForm2Transposed<f32>; 2],
@@ -106,13 +106,14 @@ impl FilterBank {
         }
     }
 
+    #[allow(clippy::unused_self)] // TODO
     fn shape_input_signal(&mut self, sample: f32) -> f32 {
         // TODO: Apply filtering to shape the input signal according to the
         // ISO 226:2003 equal-loudness-level contour at 40 phons (A-weighting).
         sample
     }
 
-    pub fn run(&mut self, sample: f32) -> FilteredSample {
+    fn run(&mut self, sample: f32) -> FilteredSample {
         let all = self.shape_input_signal(sample);
         let Self {
             low_lp_lr4,
@@ -143,8 +144,8 @@ impl FilterBank {
 
 #[derive(Debug, Default)]
 struct WaveformBinAccumulator {
-    pub rms_sum: f64,
-    pub peak: f32,
+    rms_sum: f64,
+    peak: f32,
 }
 
 impl WaveformBinAccumulator {
@@ -157,6 +158,7 @@ impl WaveformBinAccumulator {
     fn finish(self, rms_div: f64) -> WaveformBin {
         debug_assert!(rms_div > 0.0);
         let Self { rms_sum, peak } = self;
+        #[allow(clippy::cast_possible_truncation)]
         let ratio = (1.0 + (rms_sum / rms_div).sqrt()).log2() as f32;
         WaveformBin {
             ratio: WaveformVal::from_f32(ratio),
@@ -200,7 +202,7 @@ impl FilteredWaveformBinAccumulator {
         if sample_count == 0 {
             return None;
         }
-        let rms_div = sample_count as f64;
+        let rms_div = f64::from(sample_count);
         let all = all.finish(rms_div);
         let low = low.finish(rms_div);
         let mid = mid.finish(rms_div);
@@ -214,6 +216,7 @@ impl FilteredWaveformBinAccumulator {
     }
 }
 
+#[derive(Debug)]
 pub struct WaveformFilter {
     samples_per_bin: u32,
     filter_bank: FilterBank,
@@ -230,7 +233,8 @@ impl Default for WaveformFilter {
 }
 
 impl WaveformFilter {
-    fn new(sample_rate: Hertz<f32>, samples_per_bin: u32) -> Self {
+    #[must_use]
+    pub fn new(sample_rate: Hertz<f32>, samples_per_bin: u32) -> Self {
         Self {
             samples_per_bin,
             filter_bank: FilterBank::new(sample_rate),
@@ -238,11 +242,11 @@ impl WaveformFilter {
         }
     }
 
-    fn finish_bin(&mut self) -> Option<FilteredWaveformBin> {
+    pub fn finish_bin(&mut self) -> Option<FilteredWaveformBin> {
         std::mem::take(&mut self.filtered_accumulator).finish()
     }
 
-    fn add_sample(&mut self, sample: f32) -> Option<FilteredWaveformBin> {
+    pub fn add_sample(&mut self, sample: f32) -> Option<FilteredWaveformBin> {
         let next_bin = if self.filtered_accumulator.sample_count >= self.samples_per_bin {
             self.finish_bin()
         } else {
@@ -253,21 +257,8 @@ impl WaveformFilter {
         next_bin
     }
 
-    fn finish(mut self) -> Option<FilteredWaveformBin> {
+    #[must_use]
+    pub fn finish(mut self) -> Option<FilteredWaveformBin> {
         self.finish_bin()
     }
-}
-
-pub type WaveformFiltered = [FilteredWaveformBin];
-
-pub struct WaveformAnalyzer<'a> {
-    file_path: &'a Path,
-    file_type: Option<&'a Mime>,
-    bins_per_sec: NonZeroU8,
-    filter: WaveformFilter,
-    waveform: FilteredWaveform,
-}
-
-fn samples_per_bin(bins_per_sec: NonZeroU8, sample_rate: Hertz<f32>) -> u32 {
-    (sample_rate.hz() / f32::from(bins_per_sec.get())).floor() as u32
 }

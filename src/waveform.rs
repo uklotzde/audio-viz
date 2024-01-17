@@ -15,13 +15,17 @@ impl WaveformVal {
         let mapped = (val * (f32::from(Self::MAX_VAL) + 1.0)).min(f32::from(Self::MAX_VAL));
         debug_assert!(mapped >= f32::from(u8::MIN));
         debug_assert!(mapped <= f32::from(u8::MAX));
+        #[allow(clippy::cast_possible_truncation)]
+        #[allow(clippy::cast_sign_loss)]
         Self(mapped as u8)
     }
 
+    #[must_use]
     pub fn to_f32(self) -> f32 {
         f32::from(self.0) / f32::from(Self::MAX_VAL)
     }
 
+    #[must_use]
     pub const fn is_zero(self) -> bool {
         self.0 == 0
     }
@@ -44,7 +48,7 @@ pub struct WaveformBin {
     pub peak: WaveformVal,
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct FilteredWaveformBin {
     pub all: WaveformBin,
     pub low: WaveformBin,
@@ -57,6 +61,7 @@ pub type FilteredWaveform = Vec<FilteredWaveformBin>;
 
 impl FilteredWaveformBin {
     /// <https://en.wikipedia.org/wiki/Spectral_flatness>
+    #[must_use]
     pub fn ratio_flatness(&self) -> f32 {
         let Self { low, mid, high, .. } = self;
         let low = 1.0 + low.ratio.to_f32(); // [1, 256]
@@ -87,6 +92,7 @@ impl FilteredWaveformBin {
         Srgb::new(red, green, blue)
     }
 
+    #[must_use]
     pub fn rgb_color(&self, flatness_to_saturation: f32) -> (f32, f32, f32) {
         let mut rgb = self.ratio_spectral_rgb();
         debug_assert!(flatness_to_saturation >= 0.0);
@@ -100,6 +106,7 @@ impl FilteredWaveformBin {
         (rgb.red, rgb.green, rgb.blue)
     }
 
+    #[must_use]
     pub fn amplitude(&self) -> f32 {
         let all = self.all.ratio.to_f32();
         (all * std::f32::consts::SQRT_2).min(1.0)
