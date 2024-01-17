@@ -218,8 +218,8 @@ impl FilteredWaveformBinAccumulator {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct WaveformFilterConfig {
-    sample_rate_hz: f32,
-    samples_per_bin: u32,
+    pub sample_rate_hz: f32,
+    pub samples_per_bin: u32,
 }
 
 impl Default for WaveformFilterConfig {
