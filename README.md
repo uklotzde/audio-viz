@@ -6,7 +6,7 @@
 [![Crates.io](https://img.shields.io/crates/v/audio-viz.svg)](https://crates.io/crates/audio-viz)
 [![Docs.rs](https://docs.rs/audio-viz/badge.svg)](https://docs.rs/audio-viz)
 [![Deps.rs](https://deps.rs/repo/github/uklotzde/audio-viz/status.svg)](https://deps.rs/repo/github/uklotzde/audio-viz)
-[![Security audit](https://github.com/uklotzde/audio-viz/actions/workflows/security-audit.yaml/badge.svg)](https://github.com/uklotzde/audio-viz/actions/workflows/security-audit.yaml)
+[![Dependency audit](https://github.com/uklotzde/audio-viz/actions/workflows/dependency-audit.yaml/badge.svg)](https://github.com/uklotzde/audio-viz/actions/workflows/dependency-audit.yaml)
 [![Continuous integration](https://github.com/uklotzde/audio-viz/actions/workflows/test.yaml/badge.svg)](https://github.com/uklotzde/audio-viz/actions/workflows/test.yaml)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 
