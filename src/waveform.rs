@@ -56,9 +56,6 @@ pub struct FilteredWaveformBin {
     pub high: WaveformBin,
 }
 
-// TODO: Encapsulate in a dedicated (new)type
-pub type FilteredWaveform = Vec<FilteredWaveformBin>;
-
 impl FilteredWaveformBin {
     /// <https://en.wikipedia.org/wiki/Spectral_flatness>
     #[must_use]
