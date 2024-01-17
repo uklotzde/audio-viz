@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: The audio-viz authors
+# SPDX-License-Identifier: MPL-2.0
+
+[package]
+name = "audio-viz"
+description = "Colorful audio waveform visualization"
+version = "0.1.0"
+license = "MPL-2.0"
+readme = "README.md"
+repository = "https://github.com/uklotzde/audio-viz"
+keywords = ["audio", "waveform", "visualization", "color"]
+categories = ["audio"]
+rust-version = "1.75"
+edition = "2021"
+include = ["/src", "/README.md", "/LICENSES"]
+
+[dependencies]
+biquad = "0.4.2"
+palette = { version = "0.7.3", default-features = false, features = ["std"] }
+
+[lints.rust]
+future_incompatible = "warn"
+let_underscore = "warn"
+missing_debug_implementations = "warn"
+rust_2018_idioms = "warn"
+rust_2021_compatibility = "warn"
+unreachable_pub = "warn"
+unsafe_code = "warn"
+unused = "warn"
+
+[lints.clippy]
+pedantic = "warn"
+clone_on_ref_ptr = "warn"
+missing_const_for_fn = "warn"
+self_named_module_files = "warn"
+
+# Repetitions of module/type names occur frequently when using many
+# modules for keeping the size of the source files handy. Often
+# types have the same name as their parent module.
+module_name_repetitions = "allow"
+
+# Repeating the type name in `Default::default()` expressions
+# is not needed as long as the context is obvious.
+default_trait_access = "allow"
+
+# The error types returned should be self-explanatory.
+missing_errors_doc = "allow"
