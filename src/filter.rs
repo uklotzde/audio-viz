@@ -22,15 +22,15 @@ const LOW_HP_FILTER_HZ: f32 = LOW_LP_FILTER_HZ / 2.0;
 
 /// Crossover mid/high (low pass)
 ///
-/// Same boundary as used by
+/// Same boundary as used by Rekordbox whereas
 /// [Superpowered](https://docs.superpowered.com/reference/latest/analyzer>)
-/// whereas Rekordbox uses 2000 Hz.
-const HIGH_LP_FILTER_HZ: f32 = 1600.0;
+/// uses 1600 Hz.
+const HIGH_LP_FILTER_HZ: f32 = 2000.0;
 
 /// Crossover mid/high (high pass)
 ///
 /// Overlapping highs with mids.
-const HIGH_HP_FILTER_HZ: f32 = HIGH_LP_FILTER_HZ / 2.0; // Overlap with mid
+const HIGH_HP_FILTER_HZ: f32 = HIGH_LP_FILTER_HZ / 2.0;
 
 // 3-band crossover using 4th-order Linkwitz-Riley (LR4) filters (2 cascaded 2nd-order Butterworth)
 #[derive(Debug)]
