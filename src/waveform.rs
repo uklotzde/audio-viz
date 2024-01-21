@@ -38,6 +38,88 @@ impl From<WaveformVal> for u8 {
 }
 
 #[derive(Debug, Clone, Copy, Default)]
+pub struct FilteredWaveformVal {
+    pub all: WaveformVal,
+    pub low: WaveformVal,
+    pub mid: WaveformVal,
+    pub high: WaveformVal,
+}
+
+impl FilteredWaveformVal {
+    /// <https://en.wikipedia.org/wiki/Spectral_flatness>
+    #[must_use]
+    pub fn flatness(self) -> f32 {
+        let Self {
+            all: _,
+            low,
+            mid,
+            high,
+        } = self;
+        let low = 1.0 + low.to_f32(); // [1, 256]
+        let mid = 1.0 + mid.to_f32(); // [1, 256]
+        let high = 1.0 + high.to_f32(); // [1, 256]
+        let geometric_mean = (low * mid * high).powf(1.0 / 3.0);
+        let arithmetic_mean = (low + mid + high) / 3.0;
+        geometric_mean / arithmetic_mean
+    }
+
+    fn spectral_rgb(self) -> Srgb<f32> {
+        let Self {
+            all,
+            low,
+            mid,
+            high,
+        } = self;
+        let all = all.to_f32();
+        if all == 0.0 {
+            return Srgb::new(0.0, 0.0, 0.0);
+        }
+        let low = low.to_f32();
+        let mid = mid.to_f32();
+        let high = high.to_f32();
+        let red = low.min(all) / all;
+        let green = mid.min(all) / all;
+        let blue = high.min(all) / all;
+        Srgb::new(red, green, blue)
+    }
+
+    /// RGB color
+    #[must_use]
+    pub fn spectral_rgb_color(self) -> (f32, f32, f32) {
+        let rgb = self.spectral_rgb();
+        (rgb.red, rgb.green, rgb.blue)
+    }
+
+    /// RGB color with custom saturation
+    #[must_use]
+    pub fn spectral_rgb_color_saturation(self, saturation: f32) -> (f32, f32, f32) {
+        debug_assert!(saturation >= 0.0);
+        debug_assert!(saturation <= 1.0);
+        let mut rgb = self.spectral_rgb();
+        if saturation < 1.0 {
+            let mut hsv = Hsv::from_color(rgb);
+            hsv.saturation = saturation;
+            rgb = Srgb::from_color(hsv);
+        }
+        (rgb.red, rgb.green, rgb.blue)
+    }
+
+    /// RGB color with flatness mapped to saturation
+    #[must_use]
+    pub fn spectral_rgb_color_flatness(self, flatness_to_saturation: f32) -> (f32, f32, f32) {
+        debug_assert!(flatness_to_saturation >= 0.0);
+        debug_assert!(flatness_to_saturation <= 1.0);
+        let saturation = if flatness_to_saturation > 0.0 {
+            let flatness = self.flatness();
+            1.0 - flatness * flatness_to_saturation
+        } else {
+            1.0
+        };
+        self.spectral_rgb_color_saturation(saturation)
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
 pub struct WaveformBin {
     /// Clamped, logarithmic ratio in the range `0..=1`
     ///
@@ -57,56 +139,47 @@ pub struct FilteredWaveformBin {
 }
 
 impl FilteredWaveformBin {
-    /// <https://en.wikipedia.org/wiki/Spectral_flatness>
     #[must_use]
-    pub fn ratio_flatness(&self) -> f32 {
-        let Self { low, mid, high, .. } = self;
-        let low = 1.0 + low.ratio.to_f32(); // [1, 256]
-        let mid = 1.0 + mid.ratio.to_f32(); // [1, 256]
-        let high = 1.0 + high.ratio.to_f32(); // [1, 256]
-        let geometric_mean = (low * mid * high).powf(1.0 / 3.0);
-        let arithmetic_mean = (low + mid + high) / 3.0;
-        geometric_mean / arithmetic_mean
-    }
-
-    fn ratio_spectral_rgb(&self) -> Srgb<f32> {
+    pub const fn ratio(&self) -> FilteredWaveformVal {
         let Self {
             all,
             low,
             mid,
             high,
         } = self;
-        let all = all.ratio.to_f32();
-        if all == 0.0 {
-            return Srgb::new(0.0, 0.0, 0.0);
+        FilteredWaveformVal {
+            all: all.ratio,
+            low: low.ratio,
+            mid: mid.ratio,
+            high: high.ratio,
         }
-        let low = low.ratio.to_f32();
-        let mid = mid.ratio.to_f32();
-        let high = high.ratio.to_f32();
-        let red = low.min(all) / all;
-        let green = mid.min(all) / all;
-        let blue = high.min(all) / all;
-        Srgb::new(red, green, blue)
     }
 
     #[must_use]
-    pub fn rgb_color(&self, flatness_to_saturation: f32) -> (f32, f32, f32) {
-        let mut rgb = self.ratio_spectral_rgb();
-        debug_assert!(flatness_to_saturation >= 0.0);
-        debug_assert!(flatness_to_saturation <= 1.0);
-        if flatness_to_saturation > 0.0 {
-            let mut hsv = Hsv::from_color(rgb);
-            let flatness = self.ratio_flatness();
-            hsv.saturation = 1.0 - flatness * flatness_to_saturation;
-            rgb = Srgb::from_color(hsv);
+    pub const fn peak(&self) -> FilteredWaveformVal {
+        let Self {
+            all,
+            low,
+            mid,
+            high,
+        } = self;
+        FilteredWaveformVal {
+            all: all.peak,
+            low: low.peak,
+            mid: mid.peak,
+            high: high.peak,
         }
-        (rgb.red, rgb.green, rgb.blue)
     }
 
     #[must_use]
-    pub fn amplitude(&self) -> f32 {
+    pub fn ratio_amplitude(&self) -> f32 {
         let all = self.all.ratio.to_f32();
         (all * std::f32::consts::SQRT_2).min(1.0)
+    }
+
+    #[must_use]
+    pub fn peak_amplitude(&self) -> f32 {
+        self.all.peak.to_f32()
     }
 }
 
