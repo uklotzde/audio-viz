@@ -74,6 +74,9 @@ impl FilteredWaveformVal {
         let low = low.to_f32();
         let mid = mid.to_f32();
         let high = high.to_f32();
+        // The `all` value is needed to control the brightness of the resulting color.
+        // Otherwise we would only reach the edges of the RGB space with one component
+        // always maxed out.
         let denom = all.max(low).max(mid).max(high);
         if denom == 0.0 {
             return Srgb::new(0.0, 0.0, 0.0);
