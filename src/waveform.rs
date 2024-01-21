@@ -48,7 +48,7 @@ pub struct FilteredWaveformVal {
 impl FilteredWaveformVal {
     /// <https://en.wikipedia.org/wiki/Spectral_flatness>
     #[must_use]
-    pub fn flatness(self) -> f32 {
+    pub fn spectral_flatness(self) -> f32 {
         let Self {
             all: _,
             low,
@@ -111,7 +111,7 @@ impl FilteredWaveformVal {
         debug_assert!(flatness_to_saturation >= 0.0);
         debug_assert!(flatness_to_saturation <= 1.0);
         let saturation = if flatness_to_saturation > 0.0 {
-            let flatness = self.flatness();
+            let flatness = self.spectral_flatness();
             1.0 - flatness * flatness_to_saturation
         } else {
             1.0
