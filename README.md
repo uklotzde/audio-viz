@@ -10,7 +10,13 @@
 [![Continuous integration](https://github.com/uklotzde/audio-viz/actions/workflows/test.yaml/badge.svg)](https://github.com/uklotzde/audio-viz/actions/workflows/test.yaml)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 
-Colorful audio waveform visualization.
+Tooling for colorful audio waveform visualization.
+
+- Analyzes streams of audio samples, divided into windows.
+- The results of filtered peak and energy values are stored in one _bin_ per window.
+- Each _bin_ only consumes 64 bits for calculating
+  - Amplitude
+  - Spectral flatness and RGB color
 
 ## License
 
