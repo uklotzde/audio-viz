@@ -71,15 +71,16 @@ impl FilteredWaveformVal {
             high,
         } = self;
         let all = all.to_f32();
-        if all == 0.0 {
-            return Srgb::new(0.0, 0.0, 0.0);
-        }
         let low = low.to_f32();
         let mid = mid.to_f32();
         let high = high.to_f32();
-        let red = low.min(all) / all;
-        let green = mid.min(all) / all;
-        let blue = high.min(all) / all;
+        let denom = all.max(low).max(mid).max(high);
+        if denom == 0.0 {
+            return Srgb::new(0.0, 0.0, 0.0);
+        }
+        let red = low / denom;
+        let green = mid / denom;
+        let blue = high / denom;
         Srgb::new(red, green, blue)
     }
 
