@@ -73,7 +73,8 @@ impl FilteredWaveformVal {
         let all = all.to_f32();
         let low = low.to_f32();
         let mid = mid.to_f32();
-        let high = high.to_f32();
+        // Boost high frequencies to improve visibility
+        let high = (1.0 + high.to_f32()).log2();
         // The `all` value is needed to control the brightness of the resulting color.
         // Otherwise we would only reach the edges of the RGB space with one component
         // always maxed out.
