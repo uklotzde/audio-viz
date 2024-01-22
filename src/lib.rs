@@ -8,7 +8,7 @@
 #![doc = include_str!("../README.md")]
 
 mod filter;
-pub use filter::{WaveformFilter, WaveformFilterConfig};
+pub use filter::{ThreeBandFilterFreqConfig, WaveformFilter, WaveformFilterConfig};
 
 mod waveform;
 pub use waveform::{FilteredWaveformBin, WaveformBin, WaveformVal};

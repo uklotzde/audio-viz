@@ -13,52 +13,75 @@ const DEFAULT_SAMPLE_RATE_HZ: f32 = 44_100.0;
 /// Same boundary as used by both Rekordbox and
 /// [Superpowered](https://docs.superpowered.com/reference/latest/analyzer>)
 /// and also used by Rekordbox.
-const LOW_LP_FILTER_HZ: f32 = 200.0;
+const DEFAULT_LOW_LP_FILTER_HZ: f32 = 200.0;
 
 /// Crossover low/mid (low pass)
 ///
 /// Overlapping mids with lows.
-const LOW_HP_FILTER_HZ: f32 = LOW_LP_FILTER_HZ / 2.0;
+const DEFAULT_LOW_HP_FILTER_HZ: f32 = DEFAULT_LOW_LP_FILTER_HZ / 2.0;
 
 /// Crossover mid/high (low pass)
 ///
 /// Same boundary as used by
 /// [Superpowered](https://docs.superpowered.com/reference/latest/analyzer>)
 /// whereas Rekordbox uses 2000 Hz.
-const HIGH_LP_FILTER_HZ: f32 = 1600.0;
+const DEFAULT_HIGH_LP_FILTER_HZ: f32 = 1600.0;
 
 /// Crossover mid/high (high pass)
 ///
 /// Overlapping highs with mids.
-const HIGH_HP_FILTER_HZ: f32 = HIGH_LP_FILTER_HZ / 2.0;
+const DEFAULT_HIGH_HP_FILTER_HZ: f32 = DEFAULT_HIGH_LP_FILTER_HZ / 2.0;
 
-// 3-band crossover using 4th-order Linkwitz-Riley (LR4) filters (2 cascaded 2nd-order Butterworth)
-#[derive(Debug)]
-#[allow(clippy::struct_field_names)]
-struct FilterBank {
-    low_lp_lr4: [DirectForm2Transposed<f32>; 2],
-    low_hp_lr4: [DirectForm2Transposed<f32>; 2],
-    high_lp_lr4: [DirectForm2Transposed<f32>; 2],
-    high_hp_lr4: [DirectForm2Transposed<f32>; 2],
+#[derive(Debug, Clone, PartialEq)]
+pub struct ThreeBandFilterFreqConfig {
+    pub low_lp_hz: f32,
+    pub low_hp_hz: f32,
+    pub high_lp_hz: f32,
+    pub high_hp_hz: f32,
 }
 
-impl Default for FilterBank {
+impl ThreeBandFilterFreqConfig {
+    pub const MIN_FREQ_HZ: f32 = 20.0;
+    pub const MAX_FREQ_HZ: f32 = 20_000.0;
+
+    pub const DEFAULT: Self = Self {
+        low_lp_hz: DEFAULT_LOW_LP_FILTER_HZ,
+        low_hp_hz: DEFAULT_LOW_HP_FILTER_HZ,
+        high_lp_hz: DEFAULT_HIGH_LP_FILTER_HZ,
+        high_hp_hz: DEFAULT_HIGH_HP_FILTER_HZ,
+    };
+}
+
+impl Default for ThreeBandFilterFreqConfig {
     fn default() -> Self {
-        Self::new(Hertz::<f32>::from_hz(DEFAULT_SAMPLE_RATE_HZ).expect("valid sample rate"))
+        Self::DEFAULT
     }
 }
 
+// 3-band crossover using 4th-order Linkwitz-Riley (LR4) filters (2 cascaded 2nd-order Butterworth)
 #[derive(Debug)]
-struct FilteredSample {
-    all: f32,
-    low: f32,
-    mid: f32,
-    high: f32,
+struct ThreeBandFilterBank {
+    low_lp: [DirectForm2Transposed<f32>; 2],
+    low_hp: [DirectForm2Transposed<f32>; 2],
+    high_lp: [DirectForm2Transposed<f32>; 2],
+    high_hp: [DirectForm2Transposed<f32>; 2],
 }
 
-impl FilterBank {
-    fn new(fs: Hertz<f32>) -> Self {
-        let low_lp_f0 = Hertz::<f32>::from_hz(LOW_LP_FILTER_HZ).expect("valid frequency");
+impl ThreeBandFilterBank {
+    #[allow(clippy::needless_pass_by_value)]
+    fn new(fs: Hertz<f32>, config: ThreeBandFilterFreqConfig) -> Self {
+        let ThreeBandFilterFreqConfig {
+            low_lp_hz,
+            low_hp_hz,
+            high_lp_hz,
+            high_hp_hz,
+        } = config;
+        debug_assert!(low_hp_hz >= ThreeBandFilterFreqConfig::MIN_FREQ_HZ);
+        debug_assert!(low_hp_hz <= low_lp_hz); // Overlapping mids with lows
+        debug_assert!(low_lp_hz < high_hp_hz); // Non-empty mids
+        debug_assert!(high_hp_hz <= high_lp_hz); // Overlapping mids with highs
+        debug_assert!(high_lp_hz <= ThreeBandFilterFreqConfig::MAX_FREQ_HZ);
+        let low_lp_f0 = Hertz::<f32>::from_hz(low_lp_hz).expect("valid frequency");
         let low_lp = DirectForm2Transposed::<f32>::new(
             Coefficients::<f32>::from_params(
                 biquad::Type::LowPass,
@@ -68,7 +91,7 @@ impl FilterBank {
             )
             .expect("valid params"),
         );
-        let low_hp_f0 = Hertz::<f32>::from_hz(LOW_HP_FILTER_HZ).expect("valid frequency");
+        let low_hp_f0 = Hertz::<f32>::from_hz(low_hp_hz).expect("valid frequency");
         let low_hp = DirectForm2Transposed::<f32>::new(
             Coefficients::<f32>::from_params(
                 biquad::Type::HighPass,
@@ -78,7 +101,7 @@ impl FilterBank {
             )
             .expect("valid params"),
         );
-        let high_lp_f0 = Hertz::<f32>::from_hz(HIGH_LP_FILTER_HZ).expect("valid frequency");
+        let high_lp_f0 = Hertz::<f32>::from_hz(high_lp_hz).expect("valid frequency");
         let high_lp = DirectForm2Transposed::<f32>::new(
             Coefficients::<f32>::from_params(
                 biquad::Type::LowPass,
@@ -88,7 +111,7 @@ impl FilterBank {
             )
             .expect("valid params"),
         );
-        let high_hp_f0 = Hertz::<f32>::from_hz(HIGH_HP_FILTER_HZ).expect("valid frequency");
+        let high_hp_f0 = Hertz::<f32>::from_hz(high_hp_hz).expect("valid frequency");
         let high_hp = DirectForm2Transposed::<f32>::new(
             Coefficients::<f32>::from_params(
                 biquad::Type::HighPass,
@@ -99,10 +122,10 @@ impl FilterBank {
             .expect("valid params"),
         );
         Self {
-            low_lp_lr4: [low_lp, low_lp],
-            low_hp_lr4: [low_hp, low_hp],
-            high_lp_lr4: [high_lp, high_lp],
-            high_hp_lr4: [high_hp, high_hp],
+            low_hp: [low_hp, low_hp],
+            low_lp: [low_lp, low_lp],
+            high_hp: [high_hp, high_hp],
+            high_lp: [high_lp, high_lp],
         }
     }
 
@@ -116,21 +139,21 @@ impl FilterBank {
     fn run(&mut self, sample: f32) -> FilteredSample {
         let all = self.shape_input_signal(sample);
         let Self {
-            low_lp_lr4,
-            low_hp_lr4,
-            high_lp_lr4,
-            high_hp_lr4,
+            low_lp,
+            low_hp,
+            high_lp,
+            high_hp,
         } = self;
-        let low = low_lp_lr4
+        let low = low_lp
             .iter_mut()
             .fold(all, |sample, filter| filter.run(sample));
-        let mid_high = low_hp_lr4
+        let mid_high = low_hp
             .iter_mut()
             .fold(all, |sample, filter| filter.run(sample));
-        let mid = high_lp_lr4
+        let mid = high_lp
             .iter_mut()
             .fold(mid_high, |sample, filter| filter.run(sample));
-        let high = high_hp_lr4
+        let high = high_hp
             .iter_mut()
             .fold(mid_high, |sample, filter| filter.run(sample));
         FilteredSample {
@@ -146,6 +169,14 @@ impl FilterBank {
 struct WaveformBinAccumulator {
     rms_sum: f64,
     peak: f32,
+}
+
+#[derive(Debug)]
+struct FilteredSample {
+    all: f32,
+    low: f32,
+    mid: f32,
+    high: f32,
 }
 
 impl WaveformBinAccumulator {
@@ -177,7 +208,7 @@ struct FilteredWaveformBinAccumulator {
 }
 
 impl FilteredWaveformBinAccumulator {
-    fn add_sample(&mut self, filter_bank: &mut FilterBank, sample: f32) {
+    fn add_sample(&mut self, filter_bank: &mut ThreeBandFilterBank, sample: f32) {
         self.sample_count += 1;
         let FilteredSample {
             all,
@@ -216,25 +247,31 @@ impl FilteredWaveformBinAccumulator {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct WaveformFilterConfig {
     pub sample_rate_hz: f32,
     pub samples_per_bin: u32,
+    pub filter_freqs: ThreeBandFilterFreqConfig,
+}
+
+impl WaveformFilterConfig {
+    pub const DEFAULT: Self = Self {
+        sample_rate_hz: DEFAULT_SAMPLE_RATE_HZ,
+        samples_per_bin: 0,
+        filter_freqs: ThreeBandFilterFreqConfig::DEFAULT,
+    };
 }
 
 impl Default for WaveformFilterConfig {
     fn default() -> Self {
-        Self {
-            sample_rate_hz: DEFAULT_SAMPLE_RATE_HZ,
-            samples_per_bin: 0,
-        }
+        Self::DEFAULT
     }
 }
 
 #[derive(Debug)]
 pub struct WaveformFilter {
     samples_per_bin: u32,
-    filter_bank: FilterBank,
+    filter_bank: ThreeBandFilterBank,
     filtered_accumulator: FilteredWaveformBinAccumulator,
 }
 
@@ -251,11 +288,12 @@ impl WaveformFilter {
         let WaveformFilterConfig {
             sample_rate_hz,
             samples_per_bin,
+            filter_freqs,
         } = config;
         let sample_rate = Hertz::<f32>::from_hz(sample_rate_hz).expect("valid sample rate");
         Self {
             samples_per_bin,
-            filter_bank: FilterBank::new(sample_rate),
+            filter_bank: ThreeBandFilterBank::new(sample_rate, filter_freqs),
             filtered_accumulator: Default::default(),
         }
     }
