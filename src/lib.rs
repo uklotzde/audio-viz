@@ -11,4 +11,4 @@ mod filter;
 pub use filter::{ThreeBandFilterFreqConfig, WaveformFilter, WaveformFilterConfig};
 
 mod waveform;
-pub use waveform::{FilteredWaveformBin, WaveformBin, WaveformVal};
+pub use waveform::{FilteredWaveformBin, FilteredWaveformVal, WaveformBin, WaveformVal};
