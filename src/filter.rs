@@ -5,8 +5,16 @@ use biquad::{Biquad as _, Coefficients, DirectForm2Transposed, Hertz, Q_BUTTERWO
 
 use super::{FilteredWaveformBin, WaveformBin, WaveformVal};
 
-// Only needed for initialization of the filter bank
+// Only needed for default initialization.
 const DEFAULT_SAMPLE_RATE_HZ: f32 = 44_100.0;
+
+// Only needed for default initialization.
+//
+// Adopted from [Superpowered](https://docs.superpowered.com/reference/latest/analyzer>)
+// which uses a resolution of 150 points/sec resolution.
+const DEFAULT_BINS_PER_SEC: f32 = 150.0;
+
+const MIN_SAMPLES_PER_BIN: f32 = 64.0;
 
 /// Crossover low/mid (high pass)
 ///
@@ -250,14 +258,14 @@ impl FilteredWaveformBinAccumulator {
 #[derive(Debug, Clone, PartialEq)]
 pub struct WaveformFilterConfig {
     pub sample_rate_hz: f32,
-    pub samples_per_bin: u32,
+    pub bins_per_sec: f32,
     pub filter_freqs: ThreeBandFilterFreqConfig,
 }
 
 impl WaveformFilterConfig {
     pub const DEFAULT: Self = Self {
         sample_rate_hz: DEFAULT_SAMPLE_RATE_HZ,
-        samples_per_bin: 0,
+        bins_per_sec: DEFAULT_BINS_PER_SEC,
         filter_freqs: ThreeBandFilterFreqConfig::DEFAULT,
     };
 }
@@ -270,7 +278,8 @@ impl Default for WaveformFilterConfig {
 
 #[derive(Debug)]
 pub struct WaveformFilter {
-    samples_per_bin: u32,
+    pending_samples_count: f32,
+    samples_per_bin: f32,
     filter_bank: ThreeBandFilterBank,
     filtered_accumulator: FilteredWaveformBinAccumulator,
 }
@@ -287,29 +296,33 @@ impl WaveformFilter {
     pub fn new(config: WaveformFilterConfig) -> Self {
         let WaveformFilterConfig {
             sample_rate_hz,
-            samples_per_bin,
+            bins_per_sec,
             filter_freqs,
         } = config;
         let sample_rate = Hertz::<f32>::from_hz(sample_rate_hz).expect("valid sample rate");
+        let samples_per_bin = (sample_rate_hz / bins_per_sec).max(MIN_SAMPLES_PER_BIN);
         Self {
+            pending_samples_count: 0.0,
             samples_per_bin,
             filter_bank: ThreeBandFilterBank::new(sample_rate, filter_freqs),
             filtered_accumulator: Default::default(),
         }
     }
 
-    pub fn finish_bin(&mut self) -> Option<FilteredWaveformBin> {
+    fn finish_bin(&mut self) -> Option<FilteredWaveformBin> {
         std::mem::take(&mut self.filtered_accumulator).finish()
     }
 
     pub fn add_sample(&mut self, sample: f32) -> Option<FilteredWaveformBin> {
-        let next_bin = if self.filtered_accumulator.sample_count >= self.samples_per_bin {
+        let next_bin = if self.pending_samples_count >= self.samples_per_bin {
+            self.pending_samples_count -= self.samples_per_bin;
             self.finish_bin()
         } else {
             None
         };
         self.filtered_accumulator
             .add_sample(&mut self.filter_bank, sample);
+        self.pending_samples_count += 1.0;
         next_bin
     }
 
