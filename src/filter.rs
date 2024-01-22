@@ -26,7 +26,7 @@ const DEFAULT_LOW_LP_FILTER_HZ: f32 = 200.0;
 /// Crossover low/mid (low pass)
 ///
 /// Overlapping mids with lows.
-const DEFAULT_LOW_HP_FILTER_HZ: f32 = DEFAULT_LOW_LP_FILTER_HZ / 2.0;
+const DEFAULT_LOW_HP_FILTER_HZ: f32 = DEFAULT_LOW_LP_FILTER_HZ * 0.75;
 
 /// Crossover mid/high (low pass)
 ///
@@ -38,7 +38,7 @@ const DEFAULT_HIGH_LP_FILTER_HZ: f32 = 1600.0;
 /// Crossover mid/high (high pass)
 ///
 /// Overlapping highs with mids.
-const DEFAULT_HIGH_HP_FILTER_HZ: f32 = DEFAULT_HIGH_LP_FILTER_HZ / 2.0;
+const DEFAULT_HIGH_HP_FILTER_HZ: f32 = DEFAULT_HIGH_LP_FILTER_HZ * 0.75;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ThreeBandFilterFreqConfig {
