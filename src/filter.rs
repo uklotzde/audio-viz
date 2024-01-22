@@ -70,8 +70,7 @@ impl Default for ThreeBandFilterFreqConfig {
 #[derive(Debug)]
 struct ThreeBandFilterBank {
     low_lp: [DirectForm2Transposed<f32>; 2],
-    low_hp: [DirectForm2Transposed<f32>; 2],
-    high_lp: [DirectForm2Transposed<f32>; 2],
+    mid_bp: [DirectForm2Transposed<f32>; 4],
     high_hp: [DirectForm2Transposed<f32>; 2],
 }
 
@@ -130,10 +129,9 @@ impl ThreeBandFilterBank {
             .expect("valid params"),
         );
         Self {
-            low_hp: [low_hp, low_hp],
             low_lp: [low_lp, low_lp],
+            mid_bp: [low_hp, low_hp, high_lp, high_lp],
             high_hp: [high_hp, high_hp],
-            high_lp: [high_lp, high_lp],
         }
     }
 
@@ -148,22 +146,18 @@ impl ThreeBandFilterBank {
         let all = self.shape_input_signal(sample);
         let Self {
             low_lp,
-            low_hp,
-            high_lp,
+            mid_bp,
             high_hp,
         } = self;
         let low = low_lp
             .iter_mut()
             .fold(all, |sample, filter| filter.run(sample));
-        let mid_high = low_hp
+        let mid = mid_bp
             .iter_mut()
             .fold(all, |sample, filter| filter.run(sample));
-        let mid = high_lp
-            .iter_mut()
-            .fold(mid_high, |sample, filter| filter.run(sample));
         let high = high_hp
             .iter_mut()
-            .fold(mid_high, |sample, filter| filter.run(sample));
+            .fold(all, |sample, filter| filter.run(sample));
         FilteredSample {
             all,
             low,
