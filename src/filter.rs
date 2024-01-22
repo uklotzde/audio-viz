@@ -66,11 +66,12 @@ impl Default for ThreeBandFilterFreqConfig {
     }
 }
 
-// 3-band crossover using 4th-order Linkwitz-Riley (LR4) filters (2 cascaded 2nd-order Butterworth)
+// 3-band crossover using 4th-order Linkwitz-Riley (LR4) LP/HP filters (2 cascaded 2nd-order Butterworth)
+// and two 2nd-order Butterworth LP/HP filters for the mid band.
 #[derive(Debug)]
 struct ThreeBandFilterBank {
     low_lp: [DirectForm2Transposed<f32>; 2],
-    mid_bp: [DirectForm2Transposed<f32>; 4],
+    mid_bp: [DirectForm2Transposed<f32>; 2],
     high_hp: [DirectForm2Transposed<f32>; 2],
 }
 
@@ -130,7 +131,7 @@ impl ThreeBandFilterBank {
         );
         Self {
             low_lp: [low_lp, low_lp],
-            mid_bp: [low_hp, low_hp, high_lp, high_lp],
+            mid_bp: [low_hp, high_lp],
             high_hp: [high_hp, high_hp],
         }
     }
