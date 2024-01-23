@@ -8,13 +8,14 @@ use palette::{FromColor, Hsv, Srgb};
 pub struct WaveformVal(pub u8);
 
 impl WaveformVal {
+    const MIN_VAL: u8 = u8::MIN;
     const MAX_VAL: u8 = u8::MAX;
 
     pub(crate) fn from_f32(val: f32) -> Self {
-        debug_assert!(val >= f32::from(u8::MIN));
+        debug_assert!(val >= f32::from(Self::MIN_VAL));
         let mapped = (val * (f32::from(Self::MAX_VAL) + 1.0)).min(f32::from(Self::MAX_VAL));
-        debug_assert!(mapped >= f32::from(u8::MIN));
-        debug_assert!(mapped <= f32::from(u8::MAX));
+        debug_assert!(mapped >= f32::from(Self::MIN_VAL));
+        debug_assert!(mapped <= f32::from(Self::MAX_VAL));
         #[allow(clippy::cast_possible_truncation)]
         #[allow(clippy::cast_sign_loss)]
         Self(mapped as u8)
@@ -46,28 +47,6 @@ pub struct FilteredWaveformVal {
 }
 
 impl FilteredWaveformVal {
-    /// <https://en.wikipedia.org/wiki/Spectral_flatness>
-    #[must_use]
-    pub fn spectral_flatness(self) -> f32 {
-        let Self {
-            all: _,
-            low,
-            mid,
-            high,
-        } = self;
-        let low = 1.0 + low.to_f32(); // [1, 256]
-        let mid = 1.0 + mid.to_f32(); // [1, 256]
-        let high = 1.0 + high.to_f32(); // [1, 256]
-        let geometric_mean = (low * mid * high).powf(1.0 / 3.0);
-        debug_assert!(geometric_mean >= 1.0);
-        debug_assert!(geometric_mean <= 256.0);
-        let arithmetic_mean = (low + mid + high) / 3.0;
-        debug_assert!(arithmetic_mean >= 1.0);
-        debug_assert!(arithmetic_mean <= 256.0);
-        debug_assert!(arithmetic_mean > 0.0);
-        geometric_mean / arithmetic_mean
-    }
-
     fn spectral_rgb(self) -> Srgb<f32> {
         let Self {
             all,
@@ -111,24 +90,6 @@ impl FilteredWaveformVal {
             rgb = Srgb::from_color(hsv);
         }
         (rgb.red, rgb.green, rgb.blue)
-    }
-
-    /// RGB color, de-saturated by spectral flatness
-    ///
-    /// The spectral flatness affects the saturation of the color with
-    /// the given ratio.
-    #[must_use]
-    pub fn spectral_rgb_color_desaturate_flatness(self, flatness_ratio: f32) -> (f32, f32, f32) {
-        debug_assert!(flatness_ratio >= 0.0);
-        debug_assert!(flatness_ratio <= 1.0);
-        if flatness_ratio > 0.0 {
-            let flatness = self.spectral_flatness();
-            let desaturate = 1.0 - flatness * flatness_ratio;
-            self.spectral_rgb_color_desaturate(desaturate)
-        } else {
-            // Fully saturated.
-            self.spectral_rgb_color()
-        }
     }
 }
 
@@ -194,6 +155,34 @@ impl FilteredWaveformBin {
     pub fn peak_amplitude(&self) -> f32 {
         self.all.peak.to_f32()
     }
+
+    /// <https://en.wikipedia.org/wiki/Spectral_flatness>
+    #[must_use]
+    pub fn spectral_flatness(&self) -> f32 {
+        let FilteredWaveformVal {
+            all: _,
+            low,
+            mid,
+            high,
+        } = self.ratio();
+        // Undo the log2-scaling of the ratio values for this calculation.
+        let low = low.to_f32().exp2() - 1.0;
+        let mid = mid.to_f32().exp2() - 1.0;
+        let high = high.to_f32().exp2() - 1.0;
+        // We need to revert the log2-scaling of the ratio values
+        // for calculating the arithmetic mean.
+        let arithmetic_mean = (low + mid + high) / 3.0;
+        if arithmetic_mean == 0.0 {
+            // Perfectly flat spectrum.
+            return 1.0;
+        }
+        debug_assert!(arithmetic_mean > 0.0);
+        debug_assert!(arithmetic_mean <= 1.0);
+        let geometric_mean = (low * mid * high).powf(1.0 / 3.0);
+        debug_assert!(geometric_mean >= 0.0);
+        debug_assert!(geometric_mean <= 1.0);
+        geometric_mean / arithmetic_mean
+    }
 }
 
 #[cfg(test)]
@@ -202,18 +191,51 @@ mod tests {
 
     #[test]
     fn waveform_val_from_f32() {
-        assert_eq!(WaveformVal::from_f32(0.0), WaveformVal(0));
+        assert_eq!(
+            WaveformVal::from_f32(0.0),
+            WaveformVal(WaveformVal::MIN_VAL)
+        );
         assert_eq!(WaveformVal::from_f32(0.25), WaveformVal(64));
         assert_eq!(WaveformVal::from_f32(0.5), WaveformVal(128));
         assert_eq!(WaveformVal::from_f32(0.75), WaveformVal(192));
-        assert_eq!(WaveformVal::from_f32(1.0), WaveformVal(255));
+        assert_eq!(
+            WaveformVal::from_f32(1.0),
+            WaveformVal(WaveformVal::MAX_VAL)
+        );
     }
 
     #[test]
     fn waveform_val_to_from_f32() {
-        for val in u8::MIN..=u8::MAX {
+        for val in WaveformVal::MIN_VAL..=WaveformVal::MAX_VAL {
             let val = WaveformVal(val);
             assert_eq!(val, WaveformVal::from_f32(val.to_f32()));
+        }
+    }
+
+    #[test]
+    fn spectral_flatness_one() {
+        for val in WaveformVal::MIN_VAL..=WaveformVal::MAX_VAL {
+            let val = WaveformVal(val);
+            let bin = super::FilteredWaveformBin {
+                all: super::WaveformBin {
+                    ratio: val,
+                    peak: val,
+                },
+                low: super::WaveformBin {
+                    ratio: val,
+                    peak: val,
+                },
+                mid: super::WaveformBin {
+                    ratio: val,
+                    peak: val,
+                },
+                high: super::WaveformBin {
+                    ratio: val,
+                    peak: val,
+                },
+            };
+            let spectral_flatness = bin.spectral_flatness();
+            assert!(spectral_flatness > 0.999_999);
         }
     }
 }
