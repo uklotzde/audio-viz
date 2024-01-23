@@ -145,9 +145,17 @@ impl FilteredWaveformBin {
         }
     }
 
+    /// Logscaled ratio amplitude
     #[must_use]
-    pub fn ratio_amplitude(&self) -> f32 {
+    pub fn ratio_amplitude_log(&self) -> f32 {
         let all = self.all.ratio.to_f32();
+        (all * std::f32::consts::SQRT_2).min(1.0)
+    }
+
+    /// Linear ratio amplitude
+    #[must_use]
+    pub fn ratio_amplitude_lin(&self) -> f32 {
+        let all = self.all.ratio.to_f32().exp2() - 1.0;
         (all * std::f32::consts::SQRT_2).min(1.0)
     }
 
