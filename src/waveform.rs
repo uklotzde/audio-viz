@@ -59,7 +59,12 @@ impl FilteredWaveformVal {
         let mid = 1.0 + mid.to_f32(); // [1, 256]
         let high = 1.0 + high.to_f32(); // [1, 256]
         let geometric_mean = (low * mid * high).powf(1.0 / 3.0);
+        debug_assert!(geometric_mean >= 1.0);
+        debug_assert!(geometric_mean <= 256.0);
         let arithmetic_mean = (low + mid + high) / 3.0;
+        debug_assert!(arithmetic_mean >= 1.0);
+        debug_assert!(arithmetic_mean <= 256.0);
+        debug_assert!(arithmetic_mean > 0.0);
         geometric_mean / arithmetic_mean
     }
 
