@@ -84,9 +84,9 @@ impl FilteredWaveformVal {
         debug_assert!(desaturate >= 0.0);
         debug_assert!(desaturate <= 1.0);
         let mut rgb = self.spectral_rgb();
-        if desaturate < 1.0 {
+        if desaturate > 0.0 {
             let mut hsv = Hsv::from_color(rgb);
-            hsv.saturation *= desaturate;
+            hsv.saturation *= 1.0 - desaturate;
             rgb = Srgb::from_color(hsv);
         }
         (rgb.red, rgb.green, rgb.blue)
