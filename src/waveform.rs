@@ -94,32 +94,36 @@ impl FilteredWaveformVal {
         (rgb.red, rgb.green, rgb.blue)
     }
 
-    /// RGB color with custom saturation
+    /// RGB color, de-saturated
     #[must_use]
-    pub fn spectral_rgb_color_saturation(self, saturation: f32) -> (f32, f32, f32) {
-        debug_assert!(saturation >= 0.0);
-        debug_assert!(saturation <= 1.0);
+    pub fn spectral_rgb_color_desaturate(self, desaturate: f32) -> (f32, f32, f32) {
+        debug_assert!(desaturate >= 0.0);
+        debug_assert!(desaturate <= 1.0);
         let mut rgb = self.spectral_rgb();
-        if saturation < 1.0 {
+        if desaturate < 1.0 {
             let mut hsv = Hsv::from_color(rgb);
-            hsv.saturation = saturation;
+            hsv.saturation *= desaturate;
             rgb = Srgb::from_color(hsv);
         }
         (rgb.red, rgb.green, rgb.blue)
     }
 
-    /// RGB color with flatness mapped to saturation
+    /// RGB color, de-saturated by spectral flatness
+    ///
+    /// The spectral flatness affects the saturation of the color with
+    /// the given ratio.
     #[must_use]
-    pub fn spectral_rgb_color_flatness(self, flatness_to_saturation: f32) -> (f32, f32, f32) {
-        debug_assert!(flatness_to_saturation >= 0.0);
-        debug_assert!(flatness_to_saturation <= 1.0);
-        let saturation = if flatness_to_saturation > 0.0 {
+    pub fn spectral_rgb_color_desaturate_flatness(self, flatness_ratio: f32) -> (f32, f32, f32) {
+        debug_assert!(flatness_ratio >= 0.0);
+        debug_assert!(flatness_ratio <= 1.0);
+        if flatness_ratio > 0.0 {
             let flatness = self.spectral_flatness();
-            1.0 - flatness * flatness_to_saturation
+            let desaturate = 1.0 - flatness * flatness_ratio;
+            self.spectral_rgb_color_desaturate(desaturate)
         } else {
-            1.0
-        };
-        self.spectral_rgb_color_saturation(saturation)
+            // Fully saturated.
+            self.spectral_rgb_color()
+        }
     }
 }
 
