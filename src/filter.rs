@@ -16,29 +16,25 @@ const DEFAULT_BINS_PER_SEC: f32 = 150.0;
 
 const MIN_SAMPLES_PER_BIN: f32 = 64.0;
 
+// Rekordbox bands: ~200/2000 Hz
+// Superpowered bands: 200/1600 Hz
+// [Superpowered](https://docs.superpowered.com/reference/latest/analyzer>)
+
 /// Crossover low/mid (high pass)
-///
-/// Same boundary as used by both Rekordbox and
-/// [Superpowered](https://docs.superpowered.com/reference/latest/analyzer>)
-/// and also used by Rekordbox.
-const DEFAULT_LOW_LP_FILTER_HZ: f32 = 200.0;
+const DEFAULT_LOW_LP_FILTER_HZ: f32 = 250.0;
 
 /// Crossover low/mid (low pass)
 ///
-/// Overlapping mids with lows.
-const DEFAULT_LOW_HP_FILTER_HZ: f32 = DEFAULT_LOW_LP_FILTER_HZ * 0.75;
+/// Overlapping with lows, i.e. lower than [`DEFAULT_LOW_LP_FILTER_HZ`].
+const DEFAULT_LOW_HP_FILTER_HZ: f32 = 200.0;
 
 /// Crossover mid/high (low pass)
 ///
-/// Same boundary as used by
-/// [Superpowered](https://docs.superpowered.com/reference/latest/analyzer>)
-/// whereas Rekordbox uses 2000 Hz.
-const DEFAULT_HIGH_LP_FILTER_HZ: f32 = 1600.0;
+/// Overlapping highs, i.e. greater than [`DEFAULT_HIGH_HP_FILTER_HZ`].
+const DEFAULT_HIGH_LP_FILTER_HZ: f32 = 2000.0;
 
 /// Crossover mid/high (high pass)
-///
-/// Overlapping highs with mids.
-const DEFAULT_HIGH_HP_FILTER_HZ: f32 = DEFAULT_HIGH_LP_FILTER_HZ * 0.75;
+const DEFAULT_HIGH_HP_FILTER_HZ: f32 = 1600.0;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ThreeBandFilterFreqConfig {
