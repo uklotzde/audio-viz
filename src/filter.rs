@@ -31,10 +31,10 @@ const DEFAULT_LOW_HP_FILTER_HZ: f32 = 200.0;
 /// Crossover mid/high (low pass)
 ///
 /// Overlapping highs, i.e. greater than [`DEFAULT_HIGH_HP_FILTER_HZ`].
-const DEFAULT_HIGH_LP_FILTER_HZ: f32 = 2000.0;
+const DEFAULT_HIGH_LP_FILTER_HZ: f32 = 1600.0;
 
 /// Crossover mid/high (high pass)
-const DEFAULT_HIGH_HP_FILTER_HZ: f32 = 1600.0;
+const DEFAULT_HIGH_HP_FILTER_HZ: f32 = 1200.0;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ThreeBandFilterFreqConfig {
