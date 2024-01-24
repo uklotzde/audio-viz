@@ -113,6 +113,7 @@ pub struct FilteredWaveformBin {
 }
 
 impl FilteredWaveformBin {
+    /// Log2-scaled ratio (energy)
     #[must_use]
     pub const fn ratio(&self) -> FilteredWaveformVal {
         let Self {
@@ -145,14 +146,21 @@ impl FilteredWaveformBin {
         }
     }
 
-    /// Logscaled ratio amplitude
+    /// Log2-scaled ratio amplitude
+    ///
+    /// Represents the energy of the signal in the range `0..=1`.
     #[must_use]
-    pub fn ratio_amplitude_log(&self) -> f32 {
+    pub fn ratio_amplitude(&self) -> f32 {
         let all = self.all.ratio.to_f32();
         (all * std::f32::consts::SQRT_2).min(1.0)
     }
 
     /// Linear ratio amplitude
+    ///
+    /// Represents the energy of the signal in the range `0..=1`.
+    ///
+    /// The difference to the log2-scaled [`ratio_amplitude()`]([`Self::ratio_amplitude`])
+    /// is subtle. The log2-scaled version is more sensitive to small values.
     #[must_use]
     pub fn ratio_amplitude_lin(&self) -> f32 {
         let all = self.all.ratio.to_f32().exp2() - 1.0;
