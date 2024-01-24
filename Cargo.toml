@@ -16,7 +16,6 @@ include = ["/src", "/README.md", "/LICENSES"]
 
 [dependencies]
 biquad = "0.4.2"
-palette = { version = "0.7.3", default-features = false, features = ["std"] }
 
 [lints.rust]
 future_incompatible = "warn"

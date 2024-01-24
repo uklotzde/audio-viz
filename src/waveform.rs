@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: The audio-viz authors
 // SPDX-License-Identifier: MPL-2.0
 
-use palette::{FromColor, Hsv, Srgb};
-
 #[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Default)]
 #[repr(transparent)]
 pub struct WaveformVal(pub u8);
@@ -47,7 +45,9 @@ pub struct FilteredWaveformVal {
 }
 
 impl FilteredWaveformVal {
-    fn spectral_rgb(self) -> Srgb<f32> {
+    /// RGB color
+    #[must_use]
+    pub fn spectral_rgb_color(self) -> (f32, f32, f32) {
         let Self {
             all,
             low,
@@ -63,33 +63,12 @@ impl FilteredWaveformVal {
         // always maxed out.
         let denom = all.max(low).max(mid).max(high);
         if denom == 0.0 {
-            return Srgb::new(0.0, 0.0, 0.0);
+            return (0.0, 0.0, 0.0);
         }
         let red = low / denom;
         let green = mid / denom;
         let blue = high / denom;
-        Srgb::new(red, green, blue)
-    }
-
-    /// RGB color
-    #[must_use]
-    pub fn spectral_rgb_color(self) -> (f32, f32, f32) {
-        let rgb = self.spectral_rgb();
-        (rgb.red, rgb.green, rgb.blue)
-    }
-
-    /// RGB color, de-saturated
-    #[must_use]
-    pub fn spectral_rgb_color_desaturate(self, desaturate: f32) -> (f32, f32, f32) {
-        debug_assert!(desaturate >= 0.0);
-        debug_assert!(desaturate <= 1.0);
-        let mut rgb = self.spectral_rgb();
-        if desaturate > 0.0 {
-            let mut hsv = Hsv::from_color(rgb);
-            hsv.saturation *= 1.0 - desaturate;
-            rgb = Srgb::from_color(hsv);
-        }
-        (rgb.red, rgb.green, rgb.blue)
+        (red, green, blue)
     }
 }
 
