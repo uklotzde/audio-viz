@@ -15,8 +15,9 @@ Tooling for colorful audio waveform visualization.
 - Analyzes streams of audio samples, divided into windows.
 - The results of filtered peak and energy values are stored in one _bin_ per window.
 - Each _bin_ only consumes 64 bits for calculating
-  - Amplitude
-  - Spectral flatness and RGB color
+  - Amplitude (energy)
+  - Spectral flatness
+  - RGB color
 
 ## License
 

@@ -188,6 +188,7 @@ impl WaveformBinAccumulator {
     fn finish(self, rms_div: f64) -> WaveformBin {
         debug_assert!(rms_div > 0.0);
         let Self { rms_sum, peak } = self;
+        // Log2-scaling the RMS improves the resolution for small values.
         #[allow(clippy::cast_possible_truncation)]
         let ratio = (1.0 + (rms_sum / rms_div).sqrt()).log2() as f32;
         WaveformBin {
