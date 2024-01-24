@@ -166,8 +166,8 @@ impl ThreeBandFilterBank {
 
 #[derive(Debug, Default)]
 struct WaveformBinAccumulator {
-    rms_sum: f64,
     peak: f32,
+    rms_sum: f64,
 }
 
 #[derive(Debug)]
@@ -181,19 +181,21 @@ struct FilteredSample {
 impl WaveformBinAccumulator {
     fn add_sample(&mut self, sample: f32) {
         let sample_f64 = f64::from(sample);
-        self.rms_sum += sample_f64 * sample_f64;
         self.peak = self.peak.max(sample.abs());
+        self.rms_sum += sample_f64 * sample_f64;
     }
 
     fn finish(self, rms_div: f64) -> WaveformBin {
         debug_assert!(rms_div > 0.0);
-        let Self { rms_sum, peak } = self;
-        // Log2-scaling the RMS improves the resolution for small values.
+        let Self { peak, rms_sum } = self;
+        // For a sinusoidal signal, the RMS equals `SQRT_2` times the peak
+        // value. This is a good enough approximation of our expected input
+        // signal and we scale and clamp the RMS accordingly.
+        let energy = ((rms_sum / rms_div).sqrt() * std::f64::consts::SQRT_2).min(1.0);
         #[allow(clippy::cast_possible_truncation)]
-        let ratio = (1.0 + (rms_sum / rms_div).sqrt()).log2() as f32;
         WaveformBin {
-            ratio: WaveformVal::from_f32(ratio),
             peak: WaveformVal::from_f32(peak),
+            energy: WaveformVal::from_f32(energy as f32),
         }
     }
 }

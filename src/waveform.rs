@@ -74,13 +74,11 @@ impl FilteredWaveformVal {
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct WaveformBin {
-    /// Clamped, logarithmic ratio in the range `0..=1`
-    ///
-    /// Calculated from the Root Mean Square (RMS) of all samples.
-    pub ratio: WaveformVal,
-
     /// Clamped, absolute peak value in the range `0..=1`
     pub peak: WaveformVal,
+
+    /// Clamped and scaled RMS value in the range `0..=1`.
+    pub energy: WaveformVal,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -92,23 +90,7 @@ pub struct FilteredWaveformBin {
 }
 
 impl FilteredWaveformBin {
-    /// Log2-scaled ratio (energy)
-    #[must_use]
-    pub const fn ratio(&self) -> FilteredWaveformVal {
-        let Self {
-            all,
-            low,
-            mid,
-            high,
-        } = self;
-        FilteredWaveformVal {
-            all: all.ratio,
-            low: low.ratio,
-            mid: mid.ratio,
-            high: high.ratio,
-        }
-    }
-
+    /// Peak values
     #[must_use]
     pub const fn peak(&self) -> FilteredWaveformVal {
         let Self {
@@ -125,30 +107,21 @@ impl FilteredWaveformBin {
         }
     }
 
-    /// Log2-scaled ratio amplitude
-    ///
-    /// Represents the energy of the signal in the range `0..=1`.
+    /// Scaled RMS values
     #[must_use]
-    pub fn ratio_amplitude(&self) -> f32 {
-        let all = self.all.ratio.to_f32();
-        (all * std::f32::consts::SQRT_2).min(1.0)
-    }
-
-    /// Linear ratio amplitude
-    ///
-    /// Represents the energy of the signal in the range `0..=1`.
-    ///
-    /// The difference to the log2-scaled [`ratio_amplitude()`]([`Self::ratio_amplitude`])
-    /// is subtle. The log2-scaled version is more sensitive to small values.
-    #[must_use]
-    pub fn ratio_amplitude_lin(&self) -> f32 {
-        let all = self.all.ratio.to_f32().exp2() - 1.0;
-        (all * std::f32::consts::SQRT_2).min(1.0)
-    }
-
-    #[must_use]
-    pub fn peak_amplitude(&self) -> f32 {
-        self.all.peak.to_f32()
+    pub const fn energy(&self) -> FilteredWaveformVal {
+        let Self {
+            all,
+            low,
+            mid,
+            high,
+        } = self;
+        FilteredWaveformVal {
+            all: all.energy,
+            low: low.energy,
+            mid: mid.energy,
+            high: high.energy,
+        }
     }
 
     /// <https://en.wikipedia.org/wiki/Spectral_flatness>
@@ -159,13 +132,10 @@ impl FilteredWaveformBin {
             low,
             mid,
             high,
-        } = self.ratio();
-        // Undo the log2-scaling of the ratio values for this calculation.
-        let low = low.to_f32().exp2() - 1.0;
-        let mid = mid.to_f32().exp2() - 1.0;
-        let high = high.to_f32().exp2() - 1.0;
-        // We need to revert the log2-scaling of the ratio values
-        // for calculating the arithmetic mean.
+        } = self.energy();
+        let low = low.to_f32();
+        let mid = mid.to_f32();
+        let high = high.to_f32();
         let arithmetic_mean = (low + mid + high) / 3.0;
         if arithmetic_mean == 0.0 {
             // Perfectly flat spectrum.
@@ -213,20 +183,20 @@ mod tests {
             let val = WaveformVal(val);
             let bin = super::FilteredWaveformBin {
                 all: super::WaveformBin {
-                    ratio: val,
                     peak: val,
+                    energy: val,
                 },
                 low: super::WaveformBin {
-                    ratio: val,
                     peak: val,
+                    energy: val,
                 },
                 mid: super::WaveformBin {
-                    ratio: val,
                     peak: val,
+                    energy: val,
                 },
                 high: super::WaveformBin {
-                    ratio: val,
                     peak: val,
+                    energy: val,
                 },
             };
             let spectral_flatness = bin.spectral_flatness();
