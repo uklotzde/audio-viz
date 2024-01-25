@@ -21,12 +21,12 @@ const MIN_SAMPLES_PER_BIN: f32 = 64.0;
 // [Superpowered](https://docs.superpowered.com/reference/latest/analyzer>)
 
 /// Crossover low/mid (low pass)
-const DEFAULT_LOW_LP_FILTER_HZ: f32 = 240.0;
+const DEFAULT_LOW_LP_FILTER_HZ: f32 = 200.0;
 
 /// Crossover low/mid (high pass)
 ///
 /// Overlapping with lows, i.e. lower than [`DEFAULT_LOW_LP_FILTER_HZ`].
-const DEFAULT_LOW_HP_FILTER_HZ: f32 = 200.0;
+const DEFAULT_LOW_HP_FILTER_HZ: f32 = 160.0;
 
 /// Crossover mid/high (low pass)
 ///
