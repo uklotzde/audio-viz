@@ -45,23 +45,34 @@ pub struct FilteredWaveformVal {
 }
 
 impl FilteredWaveformVal {
-    /// RGB color
+    /// RGB color with full brightness
     #[must_use]
     pub fn spectral_rgb_color(self) -> (f32, f32, f32) {
+        self.spectral_rgb_color_max(1.0)
+    }
+
+    /// RGB color with brightness limited by [`Self::all`]
+    #[must_use]
+    pub fn spectral_rgb_color_all(self) -> (f32, f32, f32) {
+        self.spectral_rgb_color_max(self.all.to_f32())
+    }
+
+    /// RGB color with custom brightness limited by `max`
+    #[must_use]
+    pub fn spectral_rgb_color_max(self, max: f32) -> (f32, f32, f32) {
         let Self {
-            all,
+            all: _,
             low,
             mid,
             high,
         } = self;
-        let all = all.to_f32();
         let low = low.to_f32();
         let mid = mid.to_f32();
         let high = high.to_f32();
-        // The `all` value is needed to control the brightness of the resulting color.
+        // The `max` value is used to control the brightness of the resulting color.
         // Otherwise we would only reach the edges of the RGB space with one component
         // always maxed out.
-        let denom = all.max(low).max(mid).max(high);
+        let denom = max.max(low).max(mid).max(high);
         if denom == 0.0 {
             return (0.0, 0.0, 0.0);
         }
