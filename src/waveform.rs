@@ -48,18 +48,17 @@ impl FilteredWaveformVal {
     /// RGB color with full brightness
     #[must_use]
     pub fn spectral_rgb_color(self) -> (f32, f32, f32) {
-        self.spectral_rgb_color_max(0.0)
+        self.spectral_rgb_color_normalized(0.0)
     }
 
     /// RGB color with brightness limited by [`Self::all`]
     #[must_use]
     pub fn spectral_rgb_color_all(self) -> (f32, f32, f32) {
-        self.spectral_rgb_color_max(self.all.to_f32())
+        self.spectral_rgb_color_normalized(self.all.to_f32())
     }
 
-    /// RGB color with custom brightness limited by `max`
     #[must_use]
-    pub fn spectral_rgb_color_max(self, max: f32) -> (f32, f32, f32) {
+    fn spectral_rgb_color_normalized(self, max: f32) -> (f32, f32, f32) {
         let Self {
             all: _,
             low,
