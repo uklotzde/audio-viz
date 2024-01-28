@@ -48,7 +48,7 @@ impl FilteredWaveformVal {
     /// RGB color with full brightness
     #[must_use]
     pub fn spectral_rgb_color(self) -> (f32, f32, f32) {
-        self.spectral_rgb_color_max(1.0)
+        self.spectral_rgb_color_max(0.0)
     }
 
     /// RGB color with brightness limited by [`Self::all`]
