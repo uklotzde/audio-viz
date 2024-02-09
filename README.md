@@ -3,12 +3,11 @@
 
 # audio-viz
 
-[![Crates.io](https://img.shields.io/crates/v/audio-viz.svg)](https://crates.io/crates/audio-viz)
-[![Docs.rs](https://docs.rs/audio-viz/badge.svg)](https://docs.rs/audio-viz)
-[![Deps.rs](https://deps.rs/repo/github/uklotzde/audio-viz/status.svg)](https://deps.rs/repo/github/uklotzde/audio-viz)
-[![Dependency audit](https://github.com/uklotzde/audio-viz/actions/workflows/dependency-audit.yaml/badge.svg)](https://github.com/uklotzde/audio-viz/actions/workflows/dependency-audit.yaml)
-[![Continuous integration](https://github.com/uklotzde/audio-viz/actions/workflows/test.yaml/badge.svg)](https://github.com/uklotzde/audio-viz/actions/workflows/test.yaml)
-[![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
+[![crates.io](https://img.shields.io/crates/v/audio-viz.svg)](https://crates.io/crates/audio-viz)
+[![Docs](https://docs.rs/audio-viz/badge.svg)](https://docs.rs/audio-viz)
+[![Dependencies](https://deps.rs/repo/github/uklotzde/audio-viz/status.svg)](https://deps.rs/repo/github/uklotzde/audio-viz)
+[![Testing](https://github.com/uklotzde/audio-viz/actions/workflows/test.yaml/badge.svg)](https://github.com/uklotzde/audio-viz/actions/workflows/test.yaml)
+[![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-blue.svg)](https://opensource.org/licenses/MPL-2.0)
 
 Tooling for colorful audio waveform visualization.
 
