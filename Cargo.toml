@@ -15,7 +15,7 @@ edition = "2021"
 include = ["/src", "/README.md", "/LICENSES"]
 
 [dependencies]
-biquad = "0.4.2"
+biquad = "0.5.0"
 
 [lints.rust]
 # Opt-in for allowed-by-default lints (in alphabetical order)
@@ -30,7 +30,7 @@ unsafe_code = "warn"
 unused = "warn"
 
 [lints.clippy]
-pedantic = "warn"
+pedantic = { level = "warn", priority = -1 }
 clone_on_ref_ptr = "warn"
 missing_const_for_fn = "warn"
 self_named_module_files = "warn"
