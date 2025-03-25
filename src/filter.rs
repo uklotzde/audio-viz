@@ -72,7 +72,7 @@ struct ThreeBandFilterBank {
 }
 
 impl ThreeBandFilterBank {
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value)]
     fn new(fs: Hertz<f32>, config: ThreeBandFilterFreqConfig) -> Self {
         let ThreeBandFilterFreqConfig {
             low_lp_hz,
@@ -132,7 +132,7 @@ impl ThreeBandFilterBank {
         }
     }
 
-    #[allow(clippy::unused_self)] // TODO
+    #[expect(clippy::unused_self)] // TODO
     fn shape_input_signal(&mut self, sample: f32) -> f32 {
         // TODO: Apply filtering to shape the input signal according to the
         // ISO 226:2003 equal-loudness-level contour at 40 phons (A-weighting).
@@ -192,7 +192,7 @@ impl WaveformBinAccumulator {
         // value. This is a good enough approximation of our expected input
         // signal and we scale and clamp the RMS accordingly.
         let energy = ((rms_sum / rms_div).sqrt() * std::f64::consts::SQRT_2).min(1.0);
-        #[allow(clippy::cast_possible_truncation)]
+        #[expect(clippy::cast_possible_truncation)]
         WaveformBin {
             peak: WaveformVal::from_f32(peak),
             energy: WaveformVal::from_f32(energy as f32),
@@ -286,7 +286,7 @@ impl Default for WaveformFilter {
 
 impl WaveformFilter {
     #[must_use]
-    #[allow(clippy::missing_panics_doc)]
+    #[expect(clippy::missing_panics_doc)]
     pub fn new(config: WaveformFilterConfig) -> Self {
         let WaveformFilterConfig {
             sample_rate_hz,

@@ -14,8 +14,8 @@ impl WaveformVal {
         let mapped = (val * (f32::from(Self::MAX_VAL) + 1.0)).min(f32::from(Self::MAX_VAL));
         debug_assert!(mapped >= f32::from(Self::MIN_VAL));
         debug_assert!(mapped <= f32::from(Self::MAX_VAL));
-        #[allow(clippy::cast_possible_truncation)]
-        #[allow(clippy::cast_sign_loss)]
+        #[expect(clippy::cast_possible_truncation)]
+        #[expect(clippy::cast_sign_loss)]
         Self(mapped as u8)
     }
 
