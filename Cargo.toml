@@ -50,6 +50,3 @@ missing_errors_doc = "allow"
 
 # Inevitable for short names.
 similar_names = "allow"
-
-# Workaround for <https://github.com/rust-lang/rust-clippy/issues/12270>
-lint_groups_priority = "allow"

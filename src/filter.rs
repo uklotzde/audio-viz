@@ -132,7 +132,11 @@ impl ThreeBandFilterBank {
         }
     }
 
-    #[expect(clippy::unused_self)] // TODO
+    #[expect(clippy::unused_self, reason = "TODO")]
+    #[expect(
+        clippy::missing_const_for_fn,
+        reason = "won't remain const if implemented"
+    )]
     fn shape_input_signal(&mut self, sample: f32) -> f32 {
         // TODO: Apply filtering to shape the input signal according to the
         // ISO 226:2003 equal-loudness-level contour at 40 phons (A-weighting).

@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: The audio-viz authors
 // SPDX-License-Identifier: MPL-2.0
 
-#![allow(rustdoc::invalid_rust_codeblocks)]
-// Inevitable for short names.
+#![expect(rustdoc::invalid_rust_codeblocks)]
 #![doc = include_str!("../README.md")]
 
 mod filter;
